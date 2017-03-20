@@ -2,6 +2,9 @@ package com.binderqueue.master;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -18,6 +21,7 @@ import java.util.concurrent.TimeoutException;
 @Path("/")
 public class EntryPoint {
     private Connection connection;
+    final Logger logger = LoggerFactory.getLogger(EntryPoint.class);
 
     public EntryPoint(Connection connection) {
         this.connection = connection;
@@ -28,17 +32,18 @@ public class EntryPoint {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response run(TaskDTO request) {
-        Channel channel;
+        final String corrId = UUID.randomUUID().toString();
+        ObjectMapper mapper = new ObjectMapper();
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        final BlockingQueue<String> response = new ArrayBlockingQueue<String>(1);
+        String requestQueue = "rpc_queue";
+        Channel channel = null;
         ResultDTO result = null;
-        System.out.println("Got: " + request);
+        logger.info("Got request: {}", request);
         try {
             channel = connection.createChannel();
-            ObjectMapper mapper = new ObjectMapper();
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
             mapper.writeValue(out, request);
             String replyQueue = channel.queueDeclare().getQueue();
-            String requestQueue = "rpc_queue";
-            final String corrId = UUID.randomUUID().toString();
 
             AMQP.BasicProperties props = new AMQP.BasicProperties
                     .Builder()
@@ -47,7 +52,7 @@ public class EntryPoint {
                     .build();
 
             channel.basicPublish("", requestQueue, props, out.toByteArray());
-            final BlockingQueue<String> response = new ArrayBlockingQueue<String>(1);
+            logger.info("Sent task with corrID {} to {}. Response queue: {}", corrId, requestQueue, replyQueue);
 
             channel.basicConsume(replyQueue, true, new DefaultConsumer(channel) {
                 @Override
@@ -57,14 +62,22 @@ public class EntryPoint {
                     }
                 }
             });
+
             result = mapper.readValue(response.take(), ResultDTO.class);
-            channel.close();
+            logger.info("Received results for corrID {}, {}", corrId, result);
         } catch (IOException e) {
-            e.printStackTrace();
-        } catch (TimeoutException e) {
-            e.printStackTrace();
+            logger.warn("{}", e.getStackTrace());
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            logger.warn("{}", e.getStackTrace());
+        } finally {
+            try {
+                if(channel != null && channel.isOpen())
+                    channel.close();
+            } catch (IOException e) {
+                logger.warn("{}", e.getStackTrace());
+            } catch (TimeoutException e) {
+                logger.warn("{}", e.getStackTrace());
+            }
         }
         return Response.status(200).entity(result).build();
     }
