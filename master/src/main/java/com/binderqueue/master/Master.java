@@ -10,6 +10,7 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 
 import java.io.IOException;
+import java.util.Properties;
 import java.util.concurrent.TimeoutException;
 
 public class Master {
@@ -18,11 +19,11 @@ public class Master {
     String hostName;
     int portNumber;
 
-    public Master(String userName, String password, String hostName, int portNumber) {
-        this.userName = userName;
-        this.password = password;
-        this.hostName = hostName;
-        this.portNumber = portNumber;
+    public Master(Properties properties) {
+        this.userName = properties.getProperty("rabbitmq.username");
+        this.password = properties.getProperty("rabbitmq.password");
+        this.hostName = properties.getProperty("rabbitmq.host");
+        this.portNumber = Integer.parseInt(properties.getProperty("rabbitmq.port"));
     }
 
     public void startServer() throws Exception {
