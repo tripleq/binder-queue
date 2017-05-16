@@ -85,21 +85,16 @@ public class Worker {
         List<Double> results = new ArrayList<Double>();
         String binderDir = properties.getProperty("binderdir");
         String separator = properties.getProperty("separator");
-        String executable = properties.getProperty("executable");
+        String executableName = properties.getProperty("executable");
         String optimizationDir = properties.getProperty("optimizationdir");
         int optimizationId = task.getOptimizationId();
-        UUID uuid = UUID.randomUUID();
-        String workingDirLocation = binderDir + separator + uuid.toString();
-        File oldExecutable = new File(binderDir + separator + optimizationDir + separator + String.valueOf(optimizationId) + separator + executable);
-        File newExecutable = new File(binderDir + separator + uuid.toString() + separator + executable);
-        File workingDir = new File(workingDirLocation);
-        workingDir.mkdir();
-        FileUtils.copyFile(oldExecutable, newExecutable);
-        newExecutable.setExecutable(true);
 
-        String commandFullPath = workingDirLocation + separator + properties.getProperty("executable");
+        String executablePath = binderDir + separator + optimizationDir + separator + String.valueOf(optimizationId) + separator + executableName;
+        File executable = new File(executablePath);
+        executable.setExecutable(true);
+
         String[] commandArray = {
-          commandFullPath, binderDir, optimizationDir, String.valueOf(optimizationId)
+          executablePath, binderDir, optimizationDir, String.valueOf(optimizationId)
         };
 
         ProcessBuilder pb = new ProcessBuilder(commandArray);
@@ -134,16 +129,8 @@ public class Worker {
                 throw new TaskException("Process did not return OK");
             }
         } catch (TaskException e) {
-            logger.error("Can't execute: {}. {}", newExecutable, e.toString());
+            logger.error("Can't execute: {}. {}", executablePath, e.toString());
             throw e;
-        } finally {
-            if(Boolean.parseBoolean(properties.getProperty("cleanup"))) {
-                try {
-                    FileUtils.deleteDirectory(workingDir);
-                } catch (IOException e) {
-                    logger.warn("Can't remove working dir");
-                }
-            }
         }
         return results;
     }

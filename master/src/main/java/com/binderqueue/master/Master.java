@@ -18,16 +18,18 @@ public class Master {
     String password;
     String hostName;
     int portNumber;
+    int serverPort;
 
     public Master(Properties properties) {
         this.userName = properties.getProperty("rabbitmq.username");
         this.password = properties.getProperty("rabbitmq.password");
         this.hostName = properties.getProperty("rabbitmq.host");
         this.portNumber = Integer.parseInt(properties.getProperty("rabbitmq.port"));
+        this.serverPort = Integer.parseInt(properties.getProperty("http.server.port"));
     }
 
     public void startServer() throws Exception {
-        Server server = new Server(8080);
+        Server server = new Server(serverPort);
         ServletContextHandler handler = new ServletContextHandler();
         handler.setContextPath("");
         Connection connection = createMQConnection();
