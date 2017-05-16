@@ -32,12 +32,11 @@ public class Worker {
 
     public Worker(Properties properties) throws IOException, TimeoutException {
         this.properties = properties;
-
         connectionFactory = new ConnectionFactory();
         connectionFactory.setHost(properties.getProperty("rabbitmq.host"));
         connectionFactory.setPort(Integer.parseInt(properties.getProperty("rabbitmq.port")));
-        //connectionFactory.setUsername(properties.getProperty("rabbitmq.username"));
-        //connectionFactory.setPassword(properties.getProperty("rabbitmq.password"));
+        connectionFactory.setUsername(properties.getProperty("rabbitmq.username"));
+        connectionFactory.setPassword(properties.getProperty("rabbitmq.password"));
         connection = connectionFactory.newConnection();
         channel = connection.createChannel();
         mapper = new ObjectMapper();
@@ -53,7 +52,6 @@ public class Worker {
                         .Builder()
                         .correlationId(properties.getCorrelationId())
                         .build();
-
                 ResultDTO result = new ResultDTO();
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 try {
@@ -88,9 +86,11 @@ public class Worker {
         String binderDir = properties.getProperty("binderdir");
         String separator = properties.getProperty("separator");
         String executable = properties.getProperty("executable");
+        String optimizationDir = properties.getProperty("optimizationdir");
+        int optimizationId = task.getOptimizationId();
         UUID uuid = UUID.randomUUID();
         String workingDirLocation = binderDir + separator + uuid.toString();
-        File oldExecutable = new File(binderDir + separator + executable);
+        File oldExecutable = new File(binderDir + separator + optimizationDir + separator + String.valueOf(optimizationId) + separator + executable);
         File newExecutable = new File(binderDir + separator + uuid.toString() + separator + executable);
         File workingDir = new File(workingDirLocation);
         workingDir.mkdir();
@@ -99,7 +99,7 @@ public class Worker {
 
         String commandFullPath = workingDirLocation + separator + properties.getProperty("executable");
         String[] commandArray = {
-          commandFullPath, binderDir, properties.getProperty("optimizationdir"), properties.getProperty("optimizationuuid")
+          commandFullPath, binderDir, optimizationDir, String.valueOf(optimizationId)
         };
 
         ProcessBuilder pb = new ProcessBuilder(commandArray);

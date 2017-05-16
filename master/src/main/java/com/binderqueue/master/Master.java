@@ -51,10 +51,10 @@ public class Master {
 
     private Connection createMQConnection() throws IOException, TimeoutException {
         ConnectionFactory factory = new ConnectionFactory();
-        //factory.setUsername(userName);
-        //factory.setPassword(password);
+        factory.setUsername(userName);
+        factory.setPassword(password);
         factory.setHost(hostName);
-        //factory.setPort(portNumber);
+        factory.setPort(portNumber);
         return factory.newConnection();
 
     }
