@@ -4,6 +4,9 @@ Binder queue is a simple master worker application. Master schedules jobs to mul
 
 Executables are expected to have same name, and to be stored inside of the dirs named like optimization id.
 
+### Architecture
+![architecture](http://i.imgur.com/BChhA1W.png)
+
 ### Requirements
   - RabbitMQ server
 
