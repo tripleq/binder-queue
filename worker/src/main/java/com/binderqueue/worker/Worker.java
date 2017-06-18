@@ -84,7 +84,7 @@ public class Worker {
         List<Double> params = task.getParams();
         List<Double> results = new ArrayList<Double>();
         String binderDir = properties.getProperty("binderdir");
-        String separator = properties.getProperty("separator");
+        String separator = File.separator;
         String executableName = properties.getProperty("executable");
         String optimizationDir = properties.getProperty("optimizationdir");
         int optimizationId = task.getOptimizationId();
